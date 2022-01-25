@@ -4,13 +4,13 @@ namespace ConsoleApp1
 {
     class Program
     {
-        static readonly int rangeMax = 10;
+        static readonly int rangeMax = 100;
         static readonly int rangeMin = 0;
 
         public static void Main(string[] args)
         {
             BinNode<char> charTree = Create(RandomChars(15));
-            PrintRecursive(charTree);
+            // Add generic
 
             BinNode<int> intTree = Create(RandomInts(15));
             Print(intTree);
@@ -174,62 +174,6 @@ namespace ConsoleApp1
             Structure(self, array, index * 2 + 2, false);
         }
 
-        public static void PrintRecursive<T>(BinNode<T> t)
-        {
-            int depth = Depth(t);
-            for (int level = 0; level < depth; level++)
-            {
-                PrintSlashesRecursive(t, 0, level, depth, true, false);
-                Console.WriteLine();
-                PrintLevel(t, 0, level, depth, true);
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-        }
-
-        private static void PrintLevel<T>(BinNode<T> t, int current, int level, int stop, bool isMostLeft = false)
-        {
-            if (current >= stop)
-                return;
-            if (current == level)
-            {
-                string indent = GetIndent(level, stop);
-                string halfIndent = indent[(indent.Length / 2)..]; //TODO explain to me what the .. is
-                Console.Write(isMostLeft ? halfIndent : indent);
-                Console.Write(t == null ? "-" : t.Value.ToString());
-            }
-            if (t == null)
-                t = new BinNode<T>(null, default, null);
-            PrintLevel(t.Left, current + 1, level, stop, isMostLeft);
-            PrintLevel(t.Right, current + 1, level, stop);
-        }
-
-        private static void PrintSlashesRecursive<T>(BinNode<T> t, int current, int level, int stop, bool isMostLeft = false, bool isLeft = false)
-        {
-            if (level == 0)
-                return;
-            if (current == level)
-            {
-                if (isMostLeft)
-                    Console.Write(GetLeftmostIndent(level, stop));
-                else if (isLeft)
-                {
-                    Console.Write(GetLeftIndent(level, stop));
-                }
-                else
-                {
-                    Console.Write(GetRightIndent(level, stop));
-                }
-                Console.Write(t == null ? ' ' : isLeft ? '/' : '\\');
-            }
-            if (current >= stop)
-                return;
-            if (t == null)
-                t = new BinNode<T>(null, default, null);
-            PrintSlashesRecursive(t.Left, current + 1, level, stop, isMostLeft, true);
-            PrintSlashesRecursive(t.Right, current + 1, level, stop, false, false);
-        }
-
         private static int Depth<T>(BinNode<T> t)
         {
             if (t == null)
@@ -237,27 +181,27 @@ namespace ConsoleApp1
             return Math.Max(Depth(t.GetLeft()), Depth(t.GetRight())) + 1;
         }
 
-        private static string GetIndent(int level, int depth)
+        private static string GetIndent(int level, int depth, int width)
         {
             // 2 ^ (d-l) - 1
             return new string(' ', (int)(Math.Pow(2, depth - level) - 1));
         }
 
-        private static string GetLeftmostIndent(float level, int depth)
+        private static string GetLeftmostIndent(float level, int depth, int width)
         {
             // 3 * 2 ^ (d-l-2)
             return new string(' ', (int)(3 * Math.Pow(2, depth - level - 2)));
         }
 
-        private static string GetLeftIndent(float level, int depth)
+        private static string GetLeftIndent(float level, int depth, int width)
         {
             // 3 * 2 ^ (d-l-1) - 1
             if (level == depth - 1)
-                return " ";
+                return new string(' ', width);
             return new string(' ', (int)(3 * Math.Pow(2, depth - level - 1) - 1));
         }
 
-        private static string GetRightIndent(float level, int depth)
+        private static string GetRightIndent(float level, int depth, int width)
         {
             // 2 ^ (d-l-1) - 1
             if (level == depth - 1)
@@ -284,16 +228,16 @@ namespace ConsoleApp1
                     Console.WriteLine();
                     nl = true;
                     currentDepth++;
-                    PrintSlashes(Mapping(queue), currentDepth, maxDepth);
+                    PrintSlashes(Mapping(queue), currentDepth, maxDepth + width - 1, width);
                     Console.WriteLine();
                     continue;
                 }
 
-                string indent = GetIndent(currentDepth, maxDepth);
+                string indent = GetIndent(currentDepth, maxDepth + width - 1, width);
                 string halfIndent = indent.Substring(indent.Length / 2);
 
                 Console.Write(nl ? halfIndent : indent);
-                Console.Write(node == null ? "-" : node.Value);
+                Console.Write(node == null ? new string('-', width) : node.Value + new string('X', width - node.Value.ToString().Length));
                 nl = false;
             }
         }
@@ -319,7 +263,7 @@ namespace ConsoleApp1
             return result;
         }
 
-        private static void PrintSlashes(Queue<bool> q, int currentDepth, int maxDepth)
+        private static void PrintSlashes(Queue<bool> q, int currentDepth, int maxDepth, int width)
         {
             if (currentDepth == 0)
                 return;
@@ -327,95 +271,15 @@ namespace ConsoleApp1
             while (!q.IsEmpty())
             {
                 if (count == 0)
-                    Console.Write(GetLeftmostIndent(currentDepth, maxDepth));
+                    Console.Write(GetLeftmostIndent(currentDepth, maxDepth, width));
                 else if (count % 2 == 0)
-                    Console.Write(GetLeftIndent(currentDepth, maxDepth));
+                    Console.Write(GetLeftIndent(currentDepth, maxDepth, width));
                 else
-                    Console.Write(GetRightIndent(currentDepth, maxDepth));
+                    Console.Write(GetRightIndent(currentDepth, maxDepth, width));
                 char slash = (count % 2 == 0) ? '/' : '\\';
-                Console.Write(q.Remove() ? slash : ' ');
+                Console.Write(q.Remove() ? slash + new string(' ', width - 1) : " ");
                 count++;
             }
         }
-
-        /*
-        Full 16 Tree:
-                       1
-               2               3
-           4       5       6       7
-         8   9   A   B   C   D   E   F
-        - - - - - - - - - - - - - - - -
-
-        Leftmost Indents:
-        0: 15
-        1: 7
-        2: 3
-        3: 1
-        4: 0
-        n: 2^(d - n) - 1
-
-        Separation Indents:
-        0: [undefined]
-        1: 15
-        2: 7
-        3: 3
-        4: 1
-        n: 2^(4 - n + 1) - 1
-
-
-
-        Full Lined 16 Tree:
-                       1
-                   /       \
-               2               3
-             /   \           /   \
-           4       5       6       7
-          / \     / \     / \     / \
-         8   9   A   B   C   D   E   F
-
-        Slash Indents (→, ↓):
-        0+: 11, 7
-        1+: 5, 3, 11, 3
-        2+: 2, 1, 5, 1, 5, 1, 5, 1
-
-        leftmost = 11, 5, 2
-        alternate^ = 7, 3, 1 = 2^(3-n) - 1   // 2^(d-n-1) - 1
-        alternateV = 11, 5
-        altercount = 1, 3, 7 = 2^(n+1) - 1
-
-
-        Full Something something tree:
-                                       1
-                               /               \
-                       2                               3
-                   /       \                       /       \
-               4               5               6               7
-             /   \           /   \           /   \           /   \
-           8       9       A       B       C       D       E       F
-          / \     / \     / \     / \     / \     / \     / \     / \
-         G   H   I   J   K   L   M   N   O   P   Q   R   S   T   U   V
-
-        d = 5
-
-        Leftmost:
-        0+: 23
-        1+: 11,
-        2+: 5,
-        3+: 2   // 3*2^(5-n) - 1   // 3*2^(d-n) - 1
-
-        alternateV:
-        1+: 23
-        2+: 11
-        3+: 5
-        n: (n-1) / 2 ?
-
-
-        alternate^:
-        0+: 15
-        1+: 7
-        2+: 3
-        3+: 1
-
-        */
     }
 }
