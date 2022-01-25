@@ -179,7 +179,7 @@ namespace ConsoleApp1
             int depth = Depth(t);
             for (int level = 0; level < depth; level++)
             {
-                PrintSlashes(t, 0, level, depth, true, false);
+                PrintSlashesRecursive(t, 0, level, depth, true, false);
                 Console.WriteLine();
                 PrintLevel(t, 0, level, depth, true);
                 Console.WriteLine();
@@ -204,7 +204,7 @@ namespace ConsoleApp1
             PrintLevel(t.Right, current + 1, level, stop);
         }
 
-        private static void PrintSlashes<T>(BinNode<T> t, int current, int level, int stop, bool isMostLeft = false, bool isLeft = false)
+        private static void PrintSlashesRecursive<T>(BinNode<T> t, int current, int level, int stop, bool isMostLeft = false, bool isLeft = false)
         {
             if (level == 0)
                 return;
@@ -226,8 +226,8 @@ namespace ConsoleApp1
                 return;
             if (t == null)
                 t = new BinNode<T>(null, default, null);
-            PrintSlashes(t.Left, current + 1, level, stop, isMostLeft, true);
-            PrintSlashes(t.Right, current + 1, level, stop, false, false);
+            PrintSlashesRecursive(t.Left, current + 1, level, stop, isMostLeft, true);
+            PrintSlashesRecursive(t.Right, current + 1, level, stop, false, false);
         }
 
         private static int Depth<T>(BinNode<T> t)
@@ -284,7 +284,7 @@ namespace ConsoleApp1
                     Console.WriteLine();
                     nl = true;
                     currentDepth++;
-                    PrintSlashes(t, 0, currentDepth, maxDepth, true, false);
+                    PrintSlashes(Mapping(queue), currentDepth, maxDepth);
                     Console.WriteLine();
                     continue;
                 }
@@ -297,5 +297,125 @@ namespace ConsoleApp1
                 nl = false;
             }
         }
+
+        private static Queue<bool> Mapping(Queue<BinNode<int>> source)
+        {
+            Queue<BinNode<int>> temp = new Queue<BinNode<int>>();
+            while (!source.IsEmpty())
+                temp.Insert(source.Remove());
+
+            Queue<bool> result = new Queue<bool>();
+            bool flag = true;
+            while (!temp.IsEmpty())
+            {
+                var value = temp.Remove();
+                source.Insert(value);
+                if (value != null && value.Value == -1)
+                    flag = false;
+                if (flag)
+                    result.Insert(value != null);
+            }
+
+            return result;
+        }
+
+        private static void PrintSlashes(Queue<bool> q, int currentDepth, int maxDepth)
+        {
+            if (currentDepth == 0)
+                return;
+            int count = 0;
+            while (!q.IsEmpty())
+            {
+                if (count == 0)
+                    Console.Write(GetLeftmostIndent(currentDepth, maxDepth));
+                else if (count % 2 == 0)
+                    Console.Write(GetLeftIndent(currentDepth, maxDepth));
+                else
+                    Console.Write(GetRightIndent(currentDepth, maxDepth));
+                char slash = (count % 2 == 0) ? '/' : '\\';
+                Console.Write(q.Remove() ? slash : ' ');
+                count++;
+            }
+        }
+
+        /*
+        Full 16 Tree:
+                       1
+               2               3
+           4       5       6       7
+         8   9   A   B   C   D   E   F
+        - - - - - - - - - - - - - - - -
+
+        Leftmost Indents:
+        0: 15
+        1: 7
+        2: 3
+        3: 1
+        4: 0
+        n: 2^(d - n) - 1
+
+        Separation Indents:
+        0: [undefined]
+        1: 15
+        2: 7
+        3: 3
+        4: 1
+        n: 2^(4 - n + 1) - 1
+
+
+
+        Full Lined 16 Tree:
+                       1
+                   /       \
+               2               3
+             /   \           /   \
+           4       5       6       7
+          / \     / \     / \     / \
+         8   9   A   B   C   D   E   F
+
+        Slash Indents (→, ↓):
+        0+: 11, 7
+        1+: 5, 3, 11, 3
+        2+: 2, 1, 5, 1, 5, 1, 5, 1
+
+        leftmost = 11, 5, 2
+        alternate^ = 7, 3, 1 = 2^(3-n) - 1   // 2^(d-n-1) - 1
+        alternateV = 11, 5
+        altercount = 1, 3, 7 = 2^(n+1) - 1
+
+
+        Full Something something tree:
+                                       1
+                               /               \
+                       2                               3
+                   /       \                       /       \
+               4               5               6               7
+             /   \           /   \           /   \           /   \
+           8       9       A       B       C       D       E       F
+          / \     / \     / \     / \     / \     / \     / \     / \
+         G   H   I   J   K   L   M   N   O   P   Q   R   S   T   U   V
+
+        d = 5
+
+        Leftmost:
+        0+: 23
+        1+: 11,
+        2+: 5,
+        3+: 2   // 3*2^(5-n) - 1   // 3*2^(d-n) - 1
+
+        alternateV:
+        1+: 23
+        2+: 11
+        3+: 5
+        n: (n-1) / 2 ?
+
+
+        alternate^:
+        0+: 15
+        1+: 7
+        2+: 3
+        3+: 1
+
+        */
     }
 }
