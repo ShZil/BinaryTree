@@ -6,11 +6,105 @@ namespace ConsoleApp1
     {
         public static void Main(string[] args)
         {
-            BinNode<char> charTree = Create(RandomChars(127));
+            BinNode<char> charTree = Create(RandomChars(15));
             Print(charTree);
-            Console.WriteLine();
-            BinNode<int> intTree = Create(RandomInts(127));
+
+            BinNode<int> intTree = Create(RandomInts(15));
             Print(intTree);
+
+            // Console.WriteLine("\n\nAverage Height of tree if chance=0.6: " + CheckRandom(0.6));
+
+            BinNode<int> rngTree = new BinNode<int>(1);
+            RandomlyPopulate(rngTree, new Random(), 0.6);
+            Print(rngTree);
+            Queue<int> q = TreeToQueue(rngTree);
+            Console.WriteLine(q);
+            PrintLayered(q);
+        }
+
+        private static void PrintLayered(Queue<int> q)
+        {
+            while (!q.IsEmpty())
+            {
+                int value = q.Remove();
+                if (value == -2)
+                    Console.Write("       \\n\n");
+                else if (value == -1)
+                    Console.Write(" null ");
+                else
+                    Console.Write(" " + value + " ");
+            }
+        }
+
+        private static Queue<int> TreeToQueue(BinNode<int> t)
+        {
+            Queue<BinNode<int>> q = new Queue<BinNode<int>>();
+            TreeToQueue(t, q, true, new BinNode<int>(default));
+            return ExtractValues(q);
+        }
+
+        private static void TreeToQueue(BinNode<int> t, Queue<BinNode<int>> q, bool isLast, BinNode<int> nuller)
+        {
+            Queue<BinNode<int>> queue = new Queue<BinNode<int>>();
+            var node = t;
+            var lf = new BinNode<int>(-2);
+            int full = (int)Math.Pow(2, Depth(t));
+            int count = 1;
+            queue.Insert(t);
+            queue.Insert(lf);
+            while (!queue.IsEmpty() && count < full)
+            {
+                // Console.WriteLine(count + " Midprint: " + ExtractValues(Copy(queue)));
+                node = queue.Remove();
+                q.Insert(node);
+                if (node == lf)
+                    if (!queue.IsEmpty())
+                        queue.Insert(lf);
+                if (node != lf)
+                    count++;
+                if (node == null)
+                    node = new BinNode<int>(null, default, null);
+                if (node != lf)
+                {
+                    queue.Insert(node.Left);
+                    queue.Insert(node.Right);
+                }
+            }
+            /*
+            q.Insert(t);
+            if (isLast)
+                q.Insert(nuller);
+            if (t != null)
+            {
+                TreeToQueue(t.Left, q, false, nuller);
+                TreeToQueue(t.Right, q, isLast, nuller);
+            }*/
+        }
+
+        private static Queue<int> ExtractValues(Queue<BinNode<int>> q)
+        {
+            Queue<int> result = new Queue<int>();
+            while (!q.IsEmpty())
+            {
+                BinNode<int> node = q.Remove();
+                result.Insert(node == null ? (-1) : node.Value);
+            }
+            return result;
+        }
+
+        private static Queue<T> Copy<T>(Queue<T> source)
+        {
+            Queue<T> temp = new Queue<T>();
+            while (!source.IsEmpty())
+                temp.Insert(source.Remove());
+            Queue<T> result = new Queue<T>();
+            while (!temp.IsEmpty())
+            {
+                var value = temp.Remove();
+                result.Insert(value);
+                source.Insert(value);
+            }
+            return result;
         }
 
         private static int[] RandomInts(int length)
@@ -40,6 +134,36 @@ namespace ConsoleApp1
             return root;
         }
 
+        public static void RandomlyPopulate(BinNode<int> t, Random rng, double baseChance=0.5, int level=0)
+        {
+            if (level > 10)
+                return;
+            double chance = Math.Pow(baseChance, level);
+            if (rng.NextDouble() < chance)
+            {
+                t.Left = new BinNode<int>(rng.Next(10));
+                RandomlyPopulate(t.Left, rng, baseChance, level + 1);
+            }
+            if (rng.NextDouble() < chance)
+            {
+                t.Right = new BinNode<int>(rng.Next(10));
+                RandomlyPopulate(t.Right, rng, baseChance, level + 1);
+            }
+        }
+
+        public static float CheckRandom(double chance)
+        {
+            float attempts = 1000f;
+            int sum = 0;
+            for (int i = 0; i < attempts; i++)
+            {
+                BinNode<int> tree = new BinNode<int>(1);
+                RandomlyPopulate(tree, new Random(), chance);
+                sum += Depth(tree);
+            }
+            return sum / attempts;
+        }
+
         private static void Structure<T>(BinNode<T> parent, T[] array, int index, bool left)
         {
             if (index >= array.Length)
@@ -63,9 +187,10 @@ namespace ConsoleApp1
                 PrintLevel(t, 0, level, depth, true);
                 Console.WriteLine();
             }
+            Console.WriteLine();
         }
 
-        private static void PrintLevel<T>(BinNode<T> t, int current, int level, int stop, bool isMostLeft=false)
+        private static void PrintLevel<T>(BinNode<T> t, int current, int level, int stop, bool isMostLeft = false)
         {
             if (current >= stop)
                 return;
@@ -93,7 +218,8 @@ namespace ConsoleApp1
                 else if (isLeft)
                 {
                     Console.Write(GetLeftIndent(level, stop));
-                } else
+                }
+                else
                 {
                     Console.Write(GetRightIndent(level, stop));
                 }
