@@ -66,5 +66,10 @@ namespace ConsoleApp1
         {
             return this.Right != null;
         }
+
+        public override string ToString()
+        {
+            return $"({this.Value})";
+        }
     }
 }
